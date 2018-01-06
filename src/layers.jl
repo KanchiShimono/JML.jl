@@ -19,8 +19,8 @@ mutable struct AffineLayer{T<:Real,M<:AbstractMatrix{T},V<:AbstractVector{T},A<:
     end
 end
 
-AffineLayer(W::M, b::V) where {T<:Real,M<:AbstractMatrix{T},V<:AbstractVector{T}} = AffineLayer{T,M,V}(W, b)
-AffineLayer(W::M, b::V, ::Type{A}) where {T<:Real,M<:AbstractMatrix{T},V<:AbstractVector{T},A<:AbstractArray{T}} = AffineLayer{T,M,V,A}(W, b)
+@inline (::Type{AffineLayer})(W::M, b::V) where {T<:Real,M<:AbstractMatrix{T},V<:AbstractVector{T}} = AffineLayer{T,M,V}(W, b)
+@inline (::Type{AffineLayer})(W::M, b::V, ::Type{A}) where {T<:Real,M<:AbstractMatrix{T},V<:AbstractVector{T},A<:AbstractArray{T}} = AffineLayer{T,M,V,A}(W, b)
 
 function forward!(lyr::AffineLayer{T,M,V,A}, x::A) where {T<:Real,M<:AbstractMatrix{T},V<:AbstractVector{T},A<:AbstractArray{T}}
     lyr.x = x
