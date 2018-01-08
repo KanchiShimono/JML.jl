@@ -1,5 +1,6 @@
 export
     AffineLayer,
+    ReluLayer,
     forward!,
     backward!
 
@@ -37,3 +38,25 @@ end
 @inline _sumvec(dout::AbstractVector{T}) where {T<:Real} = dout
 @inline _sumvec(dout::AbstractMatrix{T}) where {T<:Real} = vec(mapslices(sum, dout, 2))
 @inline _sumvec(dout::AbstractArray{T,N}) where {T<:Real,N} = vec(mapslices(sum, dout, 2:N))
+
+
+mutable struct ReluLayer{B<:AbstractArray{Bool}} <: AbstractLayer
+    mask::B
+    function ReluLayer{B}() where B <: AbstractArray{Bool}
+        return new{B}()
+    end
+end
+
+@inline (::Type{ReluLayer})() = ReluLayer{AbstractArray{Bool}}()
+
+function forward!(lyr::ReluLayer{B}, x::A) where {T<:Real,B<:AbstractArray{Bool},A<:AbstractArray{T}}
+    lyr.mask = (x .<= zero(T))
+    out = copy(x)
+    out[lyr.mask] = zero(T)
+    return out
+end
+
+function backward!(lyr::ReluLayer{B}, dout::A) where {T<:Real,B<:AbstractArray{Bool},A<:AbstractArray{T}}
+    dout[lyr.mask] = zero(T)
+    return dout
+end
