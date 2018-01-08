@@ -1,6 +1,7 @@
 export
     AffineLayer,
     ReluLayer,
+    SoftmaxWithLossLayer,
     forward!,
     backward!
 
@@ -60,3 +61,27 @@ function backward!(lyr::ReluLayer{B}, dout::A) where {T<:Real,B<:AbstractArray{B
     dout[lyr.mask] = zero(T)
     return dout
 end
+
+
+mutable struct SoftmaxWithLossLayer{T,A<:AbstractArray{T}} <: AbstractLayer
+    loss::T
+    y::A
+    t::A
+    function SoftmaxWithLossLayer{T,A}() where {T<:Real,A<:AbstractArray{T}}
+        return new{T,A}()
+    end
+end
+
+function forward!(lyr::SoftmaxWithLossLayer{T,A}, x::A, t::A) where {T<:Real,A<:AbstractArray{T}}
+    lyr.t = t
+    lyr.y = softmax(x)
+    lyr.loss = crossentropyerror(lyr.y, lyr.t)
+    return lyr.loss
+end
+
+function backward!(lyr::SoftmaxWithLossLayer{T,A}, dout::T=one(T)) where {T<:Real,A<:AbstractArray{T}}
+    return dout .* _swlvec(lyr.y, lyr.t)
+end
+
+@inline _swlvec(y::AbstractArray{T}, t::AbstractVector{T}) where T <: Real = y .- t
+@inline _swlvec(y::AbstractArray{T}, t::AbstractMatrix{T}) where T <: Real = (y .- t) / size(t)[2]
